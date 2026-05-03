@@ -7,25 +7,31 @@ jobs:
   build:
     runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@v4 # Mise à jour v4
+      - uses: actions/checkout@v4
 
       - name: Set up Python
-        uses: actions/setup-python@v5 # Mise à jour v5
+        uses: actions/setup-python@v5
         with:
           python-version: '3.11'
 
-      - name: Install Dependencies
+      - name: Install System Dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y libncurses5-dev libncursesw5-dev zlib1g-dev build-essential libssl-dev libffi-dev openjdk-17-jdk
+          pip install --upgrade pip
           pip install buildozer cython kivy cryptography requests
 
-      - name: Build APK
+      - name: Build APK (Option 3 - Clean & Build)
         run: |
+          # On s'assure d'être au bon endroit
+          # Le nettoyage supprime les résidus des tentatives précédentes
+          buildozer android clean
+          
+          # Lancement de la compilation avec acceptation automatique des licences
           yes | buildozer -v android debug
         
-      - name: Upload APK
-        uses: actions/upload-artifact@v4 # LA CORRECTION EST ICI
+      - name: Upload APK Artifact
+        uses: actions/upload-artifact@v4
         with:
           name: CashControl-Final-APK
           path: bin/*.apk
