@@ -19,14 +19,17 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libncurses5-dev libncursesw5-dev zlib1g-dev build-essential libssl-dev libffi-dev openjdk-17-jdk
           pip install --upgrade pip
-          # On installe explicitement python-for-android pour éviter le FileNotFoundError
-          pip install buildozer cython kivy cryptography requests python-for-android
+          pip install buildozer cython kivy cryptography requests
+
+      - name: Pre-install Python-for-Android
+        run: |
+          # Cette étape crée manuellement le dossier manquant pour tromper Buildozer
+          mkdir -p .buildozer/android/platform/
+          git clone https://github.com/kivy/python-for-android.git .buildozer/android/platform/python-for-android
 
       - name: Build APK
         run: |
-          # Nettoyage profond
-          buildozer android clean
-          # On accepte les licences Android explicitement avant le build
+          # On saute le clean pour garder le dossier qu'on vient de cloner
           yes | buildozer -v android debug
         
       - name: Upload APK
