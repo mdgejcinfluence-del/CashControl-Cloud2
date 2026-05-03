@@ -1,16 +1,16 @@
 name: Build Android APK
 on:
   push:
-    branches: [ main ] # Vérifiez si votre branche s'appelle bien main
+    branches: [ main ]
 
 jobs:
   build:
     runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4 # Mise à jour v4
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5 # Mise à jour v5
         with:
           python-version: '3.11'
 
@@ -22,11 +22,10 @@ jobs:
 
       - name: Build APK
         run: |
-          # Cette commande accepte les licences et lance la compilation
           yes | buildozer -v android debug
         
       - name: Upload APK
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4 # LA CORRECTION EST ICI
         with:
           name: CashControl-Final-APK
           path: bin/*.apk
