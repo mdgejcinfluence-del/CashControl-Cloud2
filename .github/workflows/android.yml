@@ -1,0 +1,32 @@
+name: Build Android APK
+on:
+  push:
+    branches: [ main ] # Vérifiez si votre branche s'appelle bien main
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libncurses5-dev libncursesw5-dev zlib1g-dev build-essential libssl-dev libffi-dev openjdk-17-jdk
+          pip install buildozer cython kivy cryptography requests
+
+      - name: Build APK
+        run: |
+          # Cette commande accepte les licences et lance la compilation
+          yes | buildozer -v android debug
+        
+      - name: Upload APK
+        uses: actions/upload-artifact@v3
+        with:
+          name: CashControl-Final-APK
+          path: bin/*.apk
