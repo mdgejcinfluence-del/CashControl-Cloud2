@@ -19,18 +19,17 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libncurses5-dev libncursesw5-dev zlib1g-dev build-essential libssl-dev libffi-dev openjdk-17-jdk
           pip install --upgrade pip
-          pip install buildozer cython kivy cryptography requests
+          # On installe explicitement python-for-android pour éviter le FileNotFoundError
+          pip install buildozer cython kivy cryptography requests python-for-android
 
-      - name: Build APK (Option 3 - Clean & Build)
+      - name: Build APK
         run: |
-          # On s'assure d'être au bon endroit
-          # Le nettoyage supprime les résidus des tentatives précédentes
+          # Nettoyage profond
           buildozer android clean
-          
-          # Lancement de la compilation avec acceptation automatique des licences
+          # On accepte les licences Android explicitement avant le build
           yes | buildozer -v android debug
         
-      - name: Upload APK Artifact
+      - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: CashControl-Final-APK
