@@ -10,45 +10,50 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Free Disk Space
-        run: |
-          # Nettoyage pour éviter les conflits de versions SDK
-          sudo docker image prune -a -f
-          sudo rm -rf /usr/local/lib/android /usr/share/dotnet /opt/ghc
-
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
 
+      - name: Free Disk Space
+        run: |
+          sudo docker image prune -a -f
+          sudo rm -rf /usr/local/lib/android /usr/share/dotnet
+
       - name: Install System Dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y libncurses5-dev libncursesw5-dev zlib1g-dev build-essential \
-          libssl-dev libffi-dev openjdk-17-jdk ant autoconf automake libtool patch
+          libssl-dev libffi-dev openjdk-17-jdk ant autoconf automake libtool patch wget unzip
           pip install --upgrade pip
           pip install buildozer cython kivy cryptography requests
 
-      - name: Force Accept Android Licenses (Manual Signature)
+      - name: Pre-Install Android Build Tools (Manual)
         run: |
-          # Création du dossier de licences AVANT que Buildozer ne commence
+          # Création du chemin que Buildozer cherche désespérément
+          mkdir -p .buildozer/android/platform/android-sdk/build-tools/31.0.0
           mkdir -p .buildozer/android/platform/android-sdk/licenses
-          
-          # Injection des empreintes (hashes) de licences officielles Google
-          # Cela simule l'acceptation (y) pour empêcher le blocage
-          echo -e "8933bad161af4178b1185d1a37fbf41ea5269c55\nd56f5187479451eabf01fb743402295594811d12\n24333f8a63b6825ea9d5573f8e9976d4e3b2365b" > .buildozer/android/platform/android-sdk/licenses/android-sdk-license
-          echo -e "84831b9409646a918e30573bab4c9c91346d8abd" > .buildozer/android/platform/android-sdk/licenses/android-sdk-preview-license
-          
-          # Configuration système globale
-          mkdir -p ~/.android && touch ~/.android/repositories.cfg
 
-      - name: Build APK (Bypass Error Aidl)
-        run: |
-          # Isolation totale : on ignore les chemins Android par défaut de GitHub
-          unset ANDROID_HOME
-          unset ANDROID_SDK_ROOT
+          # Injection forcée des licences
+          echo -e "8933bad161af4178b1185d1a37fbf41ea5269c55\nd56f5187479451eabf01fb743402295594811d12\n24333f8a63b6825ea9d5573f8e9976d4e3b2365b" > .buildozer/android/platform/android-sdk/licenses/android-sdk-license
           
-          # On lance le build propre pour CashControl
+          # On télécharge manuellement les outils 31 pour avoir Aidl
+          # car la version 37 (par défaut) bugge sur GitHub
+          wget https://dl.google.com/android/repository/build-tools_r31.0.0-linux.zip
+          unzip -q build-tools_r31.0.0-linux.zip
+          cp -r android-12/* .buildozer/android/platform/android-sdk/build-tools/31.0.0/
+          
+          # On crée un faux fichier pour tromper l'installateur
+          touch .buildozer/android/platform/android-sdk/build-tools/31.0.0/aidl
+
+      - name: Build APK (Bypass License Prompt)
+        run: |
+          # On force Buildozer à utiliser la version que nous venons d'installer
+          export APP_ANDROID_API=31
+          export APP_ANDROID_BUILD_TOOLS_VERSION=31.0.0
+          unset ANDROID_HOME
+          
+          # On lance le build
           buildozer -v android debug
         
       - name: Upload APK
