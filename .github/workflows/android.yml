@@ -12,11 +12,8 @@ jobs:
 
       - name: Free Disk Space
         run: |
-          # Supprime les outils pré-installés inutiles pour libérer de la RAM et du disque
           sudo docker image prune -a -f
           sudo rm -rf /usr/local/lib/android /usr/share/dotnet /opt/ghc
-          sudo rm -rf "/usr/local/share/boost"
-          sudo rm -rf "$AGENT_TOOLSDIRECTORY/CodeQL"
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -27,33 +24,31 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y libncurses5-dev libncursesw5-dev zlib1g-dev build-essential \
-          libssl-dev libffi-dev openjdk-17-jdk ant autoconf automake libtool patch ffmpeg
+          libssl-dev libffi-dev openjdk-17-jdk ant autoconf automake libtool patch
           pip install --upgrade pip
-          pip install buildozer cython kivy cryptography requests urllib3 certifi idna chardet
+          pip install buildozer cython kivy cryptography requests
 
       - name: Force Accept Android Licenses
         run: |
-          # Création manuelle des fichiers de licence pour éviter l'arrêt du processus
+          # Création manuelle des fichiers de licence pour court-circuiter le (y/N)
           mkdir -p ~/.android
           touch ~/.android/repositories.cfg
           mkdir -p .buildozer/android/platform/android-sdk/licenses
           
-          # Injection des signatures de licences officielles
+          # Injection des signatures de licences officielles Google
           echo -e "8933bad161af4178b1185d1a37fbf41ea5269c55\nd56f5187479451eabf01fb743402295594811d12\n24333f8a63b6825ea9d5573f8e9976d4e3b2365b" > .buildozer/android/platform/android-sdk/licenses/android-sdk-license
           echo -e "84831b9409646a918e30573bab4c9c91346d8abd" > .buildozer/android/platform/android-sdk/licenses/android-sdk-preview-license
           
-          # On valide une dernière fois avec sdkmanager
+          # Validation supplémentaire via l'outil système
           yes | sdkmanager --licenses || true
 
-      - name: Build APK with Buildozer
+      - name: Build APK (Single Architecture)
         run: |
-          # Désactivation des variables d'environnement conflictuelles de GitHub
+          # Suppression des variables d'environnement conflictuelles
           unset ANDROID_HOME
           unset ANDROID_SDK_ROOT
-          unset ANDROID_NDK_ROOT
-          
-          # Lancement du build en mode debug avec log complet
-          # On ne met pas de "yes |" ici car les licences sont déjà écrites
+          # On impose l'API 31 pour stabiliser le build de CashControl
+          export APP_ANDROID_API=31
           buildozer -v android debug
         
       - name: Upload APK Artifact
