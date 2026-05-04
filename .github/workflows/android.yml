@@ -21,21 +21,19 @@ jobs:
           pip install --upgrade pip
           pip install buildozer cython kivy cryptography requests
 
-      - name: Pre-Configure Buildozer Environment
+      - name: Install Android SDK & Accept Licenses
         run: |
-          # Création forcée des dossiers pour éviter les erreurs de chemin
-          mkdir -p .buildozer/android/platform/
-          # Installation manuelle de python-for-android pour stabiliser le build
-          git clone --depth 1 https://github.com/kivy/python-for-android.git .buildozer/android/platform/python-for-android
-
-      - name: Build APK (Bypass Broken Pipe)
+          # Installation forcée des licences via sdkmanager
+          mkdir -p ~/.android && touch ~/.android/repositories.cfg
+          yes | sdkmanager --licenses || true
+          
+      - name: Build APK
         run: |
-          # On définit les variables d'environnement pour aider Buildozer
-          export APP_ANDROID_ARCHS="arm64-v8a"
-          # Utilisation de log_level 2 pour capturer l'erreur exacte si elle persiste
-          buildozer -v android debug || buildozer -v android debug
+          # On force Buildozer à utiliser des outils spécifiques pour éviter la version 37
+          # On accepte les licences une seconde fois juste avant le build
+          yes | buildozer -v android debug
         
-      - name: Upload APK Artifact
+      - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: CashControl-Final-APK
