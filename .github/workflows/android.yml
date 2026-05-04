@@ -12,8 +12,9 @@ jobs:
 
       - name: Free Disk Space
         run: |
+          # Nettoyage pour éviter les conflits de versions SDK
           sudo docker image prune -a -f
-          sudo rm -rf /usr/local/lib/android /usr/share/dotnet
+          sudo rm -rf /usr/local/lib/android /usr/share/dotnet /opt/ghc
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -30,29 +31,24 @@ jobs:
 
       - name: Force Accept Android Licenses (Manual Signature)
         run: |
-          # On crée les dossiers de licences là où Buildozer va les chercher
-          mkdir -p ~/.android && touch ~/.android/repositories.cfg
+          # Création du dossier de licences AVANT que Buildozer ne commence
           mkdir -p .buildozer/android/platform/android-sdk/licenses
           
-          # Injection des signatures de licences officielles Google
+          # Injection des empreintes (hashes) de licences officielles Google
           # Cela simule l'acceptation (y) pour empêcher le blocage
           echo -e "8933bad161af4178b1185d1a37fbf41ea5269c55\nd56f5187479451eabf01fb743402295594811d12\n24333f8a63b6825ea9d5573f8e9976d4e3b2365b" > .buildozer/android/platform/android-sdk/licenses/android-sdk-license
           echo -e "84831b9409646a918e30573bab4c9c91346d8abd" > .buildozer/android/platform/android-sdk/licenses/android-sdk-preview-license
           
-          # On accepte aussi via le SDK Manager système pour doubler la sécurité
-          yes | sdkmanager --licenses || true
+          # Configuration système globale
+          mkdir -p ~/.android && touch ~/.android/repositories.cfg
 
-      - name: Build APK (Bypass Version 37)
+      - name: Build APK (Bypass Error Aidl)
         run: |
-          # ON FORCE Buildozer à ignorer les SDK pré-installés conflictuels
+          # Isolation totale : on ignore les chemins Android par défaut de GitHub
           unset ANDROID_HOME
           unset ANDROID_SDK_ROOT
           
-          # On impose l'API 31 et les build-tools stables pour éviter l'erreur Aidl
-          export APP_ANDROID_API=31
-          export APP_ANDROID_BUILD_TOOLS_VERSION=31.0.0
-          
-          # On lance le build final
+          # On lance le build propre pour CashControl
           buildozer -v android debug
         
       - name: Upload APK
