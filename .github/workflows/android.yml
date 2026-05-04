@@ -21,19 +21,22 @@ jobs:
           pip install --upgrade pip
           pip install buildozer cython kivy cryptography requests
 
-      - name: Accept Android Licenses (Force)
+      - name: Pre-Accept Android Licenses
         run: |
-          # Cette commande crée les fichiers de licence acceptés avant le lancement de Buildozer
-          mkdir -p ~/.android && touch ~/.android/repositories.cfg
-          # On accepte toutes les licences possibles pour le SDK manager de l'image
-          yes | sdkmanager --licenses || true
-          
-      - name: Build APK
+          # Création forcée des fichiers de licence pour éviter que Buildozer ne pose de questions
+          mkdir -p ~/.android
+          touch ~/.android/repositories.cfg
+          mkdir -p .buildozer/android/platform/android-sdk/licenses
+          # Écriture des hash de licences standards
+          echo -e "8933bad161af4178b1185d1a37fbf41ea5269c55\nd56f5187479451eabf01fb743402295594811d12\n24333f8a63b6825ea9d5573f8e9976d4e3b2365b" > .buildozer/android/platform/android-sdk/licenses/android-sdk-license
+          echo -e "84831b9409646a918e30573bab4c9c91346d8abd" > .buildozer/android/platform/android-sdk/licenses/android-sdk-preview-license
+
+      - name: Build APK (Bypass Broken Pipe)
         run: |
-          # On définit une variable pour éviter que Buildozer cherche des versions trop récentes (37)
-          export APP_ANDROID_BUILD_TOOLS_VERSION="33.0.0"
-          # On utilise "yes" pour valider les licences spécifiques à Buildozer
-          yes | buildozer -v android debug
+          # On définit des limites de ressources pour stabiliser le build
+          export APP_ANDROID_ARCHS="arm64-v8a"
+          # On lance buildozer sans le pipe 'yes' pour éviter le crash du flux
+          buildozer -v android debug
         
       - name: Upload APK
         uses: actions/upload-artifact@v4
