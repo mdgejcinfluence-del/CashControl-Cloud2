@@ -12,7 +12,7 @@ jobs:
 
       - name: Free Disk Space
         run: |
-          # Libère de la RAM et du disque pour la sécurité AES (cryptography)
+          # Libère de la place pour la compilation de cryptography
           sudo docker image prune -a -f
           sudo rm -rf /usr/local/lib/android /usr/share/dotnet /opt/ghc
 
@@ -31,23 +31,23 @@ jobs:
 
       - name: Force Accept Android Licenses (Manual Signature)
         run: |
-          # Création forcée du répertoire de licences de Buildozer
+          # Création forcée du répertoire de licences attendu par Buildozer
           mkdir -p .buildozer/android/platform/android-sdk/licenses
           
           # Injection des empreintes (hashes) de licences officielles Google
-          # Cela fait croire au système que vous avez cliqué sur "y"
+          # Cela simule l'acceptation manuelle pour toutes les versions (y)
           echo -e "8933bad161af4178b1185d1a37fbf41ea5269c55\nd56f5187479451eabf01fb743402295594811d12\n24333f8a63b6825ea9d5573f8e9976d4e3b2365b" > .buildozer/android/platform/android-sdk/licenses/android-sdk-license
           echo -e "84831b9409646a918e30573bab4c9c91346d8abd" > .buildozer/android/platform/android-sdk/licenses/android-sdk-preview-license
           
-          # Création du fichier de config système pour éviter d'autres questions
+          # Création du fichier config système pour éviter les questions résiduelles
           mkdir -p ~/.android && touch ~/.android/repositories.cfg
 
-      - name: Build APK (Bypass Version 37)
+      - name: Build APK (Bypass Aidl Error)
         run: |
-          # On nettoie les variables conflictuelles de GitHub
+          # Isolation du build : on ignore les SDK pré-installés conflictuels
           unset ANDROID_HOME
           unset ANDROID_SDK_ROOT
-          # On force Buildozer à utiliser sa propre instance isolée
+          # On lance la compilation propre pour CashControl
           buildozer -v android debug
         
       - name: Upload APK Artifact
