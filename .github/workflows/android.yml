@@ -21,17 +21,20 @@ jobs:
           pip install --upgrade pip
           pip install buildozer cython kivy cryptography requests
 
-      - name: Install Android SDK & Accept Licenses
+      - name: Force Accept Android Licenses
         run: |
-          # Installation forcée des licences via sdkmanager
+          # Installation manuelle des licences pour éviter le Broken Pipe
           mkdir -p ~/.android && touch ~/.android/repositories.cfg
+          # Cette commande accepte toutes les licences SDK avant de lancer Buildozer
           yes | sdkmanager --licenses || true
-          
-      - name: Build APK
+
+      - name: Build APK (Manual License Mode)
         run: |
-          # On force Buildozer à utiliser des outils spécifiques pour éviter la version 37
-          # On accepte les licences une seconde fois juste avant le build
-          yes | buildozer -v android debug
+          # On définit les chemins pour aider Buildozer à trouver le SDK
+          export ANDROIDSDK=$HOME/.buildozer/android/platform/android-sdk
+          export ANDROIDNDK=$HOME/.buildozer/android/platform/android-ndk-r25b
+          # On lance la compilation sans le 'yes |' au début pour voir l'erreur réelle
+          buildozer -v android debug
         
       - name: Upload APK
         uses: actions/upload-artifact@v4
