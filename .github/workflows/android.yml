@@ -23,10 +23,11 @@ jobs:
           pip install --upgrade pip
           pip install buildozer cython kivy cryptography requests
 
-      - name: Build APK (Méthode Classique)
+      - name: Build APK (Version Classique)
         run: |
-          # On laisse Buildozer gérer le SDK et les licences seul, sans intervention
-          buildozer -v android debug
+          # On laisse Buildozer gérer seul comme tu le souhaites
+          # La commande 'yes' tente juste de répondre aux licences sans dossier spécial
+          yes | buildozer -v android debug
         
       - name: Upload APK
         uses: actions/upload-artifact@v4
