@@ -17,24 +17,25 @@ jobs:
       - name: Install System Dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y libncurses5-dev libncursesw5-dev zlib1g-dev build-essential libssl-dev libffi-dev openjdk-17-jdk ant autoconf automake libtool
+          sudo apt-get install -y libncurses5-dev libncursesw5-dev zlib1g-dev build-essential libssl-dev libffi-dev openjdk-17-jdk ant autoconf automake libtool patch
           pip install --upgrade pip
           pip install buildozer cython kivy cryptography requests
 
-      - name: Pre-install Android Platform Tools
+      - name: Pre-Configure Buildozer Environment
         run: |
-          # Création forcée des répertoires pour éviter le Broken Pipe
+          # Création forcée des dossiers pour éviter les erreurs de chemin
           mkdir -p .buildozer/android/platform/
-          # Clonage direct de python-for-android dans le dossier attendu
+          # Installation manuelle de python-for-android pour stabiliser le build
           git clone --depth 1 https://github.com/kivy/python-for-android.git .buildozer/android/platform/python-for-android
 
-      - name: Build APK
+      - name: Build APK (Bypass Broken Pipe)
         run: |
-          # On lance le build sans faire de clean pour garder le dossier cloné
-          # On augmente le niveau de log à 2 pour voir précisément où ça bloque si besoin
-          yes | buildozer -v android debug
+          # On définit les variables d'environnement pour aider Buildozer
+          export APP_ANDROID_ARCHS="arm64-v8a"
+          # Utilisation de log_level 2 pour capturer l'erreur exacte si elle persiste
+          buildozer -v android debug || buildozer -v android debug
         
-      - name: Upload APK
+      - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
           name: CashControl-Final-APK
