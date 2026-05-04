@@ -21,28 +21,19 @@ jobs:
           pip install --upgrade pip
           pip install buildozer cython kivy cryptography requests
 
-      - name: Force Accept Android Licenses
+      - name: Accept Android Licenses (Force)
         run: |
-          # Création des répertoires de licences attendus par Buildozer
-          mkdir -p ~/.android
-          touch ~/.android/repositories.cfg
-          mkdir -p .buildozer/android/platform/android-sdk/licenses
-          
-          # Injection des signatures de licences officielles (Google)
-          # Cela simule une acceptation manuelle du contrat (y)
-          echo -e "8933bad161af4178b1185d1a37fbf41ea5269c55\nd56f5187479451eabf01fb743402295594811d12\n24333f8a63b6825ea9d5573f8e9976d4e3b2365b" > .buildozer/android/platform/android-sdk/licenses/android-sdk-license
-          echo -e "84831b9409646a918e30573bab4c9c91346d8abd" > .buildozer/android/platform/android-sdk/licenses/android-sdk-preview-license
-          
-          # On accepte aussi via l'outil système pour doubler la sécurité
+          # Cette commande crée les fichiers de licence acceptés avant le lancement de Buildozer
+          mkdir -p ~/.android && touch ~/.android/repositories.cfg
+          # On accepte toutes les licences possibles pour le SDK manager
           yes | sdkmanager --licenses || true
-
-      - name: Build APK (Bypass Version 37)
+          
+      - name: Build APK
         run: |
-          # On force l'utilisation d'une version stable pour éviter le bug Aidl
+          # On définit une variable pour éviter que Buildozer cherche des versions trop récentes (37)
           export APP_ANDROID_BUILD_TOOLS_VERSION="33.0.0"
-          export APP_ANDROID_API="33"
-          # On lance buildozer sans le pipe 'yes' car les licences sont déjà écrites
-          buildozer -v android debug
+          # On utilise "yes" pour valider les licences spécifiques à Buildozer
+          yes | buildozer -v android debug
         
       - name: Upload APK
         uses: actions/upload-artifact@v4
