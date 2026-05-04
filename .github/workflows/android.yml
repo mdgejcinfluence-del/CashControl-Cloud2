@@ -12,7 +12,7 @@ jobs:
 
       - name: Free Disk Space
         run: |
-          # Supprime les outils inutiles pour éviter les conflits de SDK
+          # Libère de la RAM et du disque pour la sécurité AES (cryptography)
           sudo docker image prune -a -f
           sudo rm -rf /usr/local/lib/android /usr/share/dotnet /opt/ghc
 
@@ -29,25 +29,25 @@ jobs:
           pip install --upgrade pip
           pip install buildozer cython kivy cryptography requests
 
-      - name: Force Accept Android Licenses
+      - name: Force Accept Android Licenses (Manual Signature)
         run: |
-          # On crée physiquement les fichiers de licence là où Buildozer les cherche
+          # Création forcée du répertoire de licences de Buildozer
           mkdir -p .buildozer/android/platform/android-sdk/licenses
           
-          # Injection des signatures de licences officielles Google
-          # Cela simule l'acceptation manuelle (y) pour toutes les versions
+          # Injection des empreintes (hashes) de licences officielles Google
+          # Cela fait croire au système que vous avez cliqué sur "y"
           echo -e "8933bad161af4178b1185d1a37fbf41ea5269c55\nd56f5187479451eabf01fb743402295594811d12\n24333f8a63b6825ea9d5573f8e9976d4e3b2365b" > .buildozer/android/platform/android-sdk/licenses/android-sdk-license
           echo -e "84831b9409646a918e30573bab4c9c91346d8abd" > .buildozer/android/platform/android-sdk/licenses/android-sdk-preview-license
           
-          # On crée aussi le dossier de configuration global
+          # Création du fichier de config système pour éviter d'autres questions
           mkdir -p ~/.android && touch ~/.android/repositories.cfg
 
-      - name: Build APK (Bypass Error Aidl)
+      - name: Build APK (Bypass Version 37)
         run: |
-          # On efface les variables système qui forcent les mauvaises versions de SDK
+          # On nettoie les variables conflictuelles de GitHub
           unset ANDROID_HOME
           unset ANDROID_SDK_ROOT
-          # On lance le build propre pour CashControl
+          # On force Buildozer à utiliser sa propre instance isolée
           buildozer -v android debug
         
       - name: Upload APK Artifact
