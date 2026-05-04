@@ -23,29 +23,13 @@ jobs:
           pip install --upgrade pip
           pip install buildozer cython kivy cryptography requests
 
-      - name: Bypass Google Licenses
+      - name: Build APK (Méthode Classique)
         run: |
-          # On crée le dossier manquant manuellement
-          mkdir -p .buildozer/android/platform/android-sdk/licenses
-          
-          # On injecte la signature d'acceptation directement sur le disque
-          # Cela empêche le message "Accept? (y/N)" d'apparaître
-          echo -e "8933bad161af4178b1185d1a37fbf41ea5269c55\nd56f5187479451eabf01fb743402295594811d12\n24333f8a63b6825ea9d5573f8e9976d4e3b2365b" > .buildozer/android/platform/android-sdk/licenses/android-sdk-license
-
-      - name: Build APK (Force Stability)
-        run: |
-          # On ignore les outils pré-installés (Version 37) de GitHub
-          unset ANDROID_HOME
-          unset ANDROID_SDK_ROOT
-          
-          # On impose l'API 31 pour retrouver la simplicité d'avant
-          export APP_ANDROID_API=31
-          export APP_ANDROID_BUILD_TOOLS_VERSION=31.0.0
-          
+          # On laisse Buildozer gérer le SDK et les licences seul, sans intervention
           buildozer -v android debug
         
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: CashControl-Final-APK
+          name: CashControl-APK
           path: bin/*.apk
