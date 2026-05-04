@@ -15,45 +15,31 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Free Disk Space
-        run: |
-          sudo docker image prune -a -f
-          sudo rm -rf /usr/local/lib/android /usr/share/dotnet
-
       - name: Install System Dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y libncurses5-dev libncursesw5-dev zlib1g-dev build-essential \
-          libssl-dev libffi-dev openjdk-17-jdk ant autoconf automake libtool patch wget unzip
+          libssl-dev libffi-dev openjdk-17-jdk ant autoconf automake libtool patch
           pip install --upgrade pip
           pip install buildozer cython kivy cryptography requests
 
-      - name: Pre-Install Android Build Tools (Manual)
+      - name: Fix Android SDK & Licenses
         run: |
-          # Création du chemin que Buildozer cherche désespérément
-          mkdir -p .buildozer/android/platform/android-sdk/build-tools/31.0.0
+          # On crée les répertoires de licences pour Buildozer
           mkdir -p .buildozer/android/platform/android-sdk/licenses
-
-          # Injection forcée des licences
+          
+          # Injection des empreintes de licences pour éviter le (y/N)
           echo -e "8933bad161af4178b1185d1a37fbf41ea5269c55\nd56f5187479451eabf01fb743402295594811d12\n24333f8a63b6825ea9d5573f8e9976d4e3b2365b" > .buildozer/android/platform/android-sdk/licenses/android-sdk-license
           
-          # On télécharge manuellement les outils 31 pour avoir Aidl
-          # car la version 37 (par défaut) bugge sur GitHub
-          wget https://dl.google.com/android/repository/build-tools_r31.0.0-linux.zip
-          unzip -q build-tools_r31.0.0-linux.zip
-          cp -r android-12/* .buildozer/android/platform/android-sdk/build-tools/31.0.0/
-          
-          # On crée un faux fichier pour tromper l'installateur
-          touch .buildozer/android/platform/android-sdk/build-tools/31.0.0/aidl
+          # On utilise le sdkmanager du système pour installer les build-tools proprement
+          # sans passer par un lien URL risqué
+          sudo $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --sdk_root=$ANDROID_HOME "build-tools;31.0.0" "platforms;android-31"
 
-      - name: Build APK (Bypass License Prompt)
+      - name: Build APK (Bypass Error)
         run: |
-          # On force Buildozer à utiliser la version que nous venons d'installer
+          # On force Buildozer à utiliser ce que nous venons de préparer
           export APP_ANDROID_API=31
-          export APP_ANDROID_BUILD_TOOLS_VERSION=31.0.0
-          unset ANDROID_HOME
-          
-          # On lance le build
+          # On lance le build final pour CashControl
           buildozer -v android debug
         
       - name: Upload APK
