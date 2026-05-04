@@ -12,6 +12,7 @@ jobs:
 
       - name: Free Disk Space
         run: |
+          # Supprime les outils inutiles pour éviter les conflits de SDK
           sudo docker image prune -a -f
           sudo rm -rf /usr/local/lib/android /usr/share/dotnet /opt/ghc
 
@@ -30,23 +31,23 @@ jobs:
 
       - name: Force Accept Android Licenses
         run: |
-          # Création du dossier de destination des licences de Buildozer
+          # On crée physiquement les fichiers de licence là où Buildozer les cherche
           mkdir -p .buildozer/android/platform/android-sdk/licenses
           
-          # Injection des clés de validation Google (les "signatures")
-          # Cela simule l'appui sur "y" pour toutes les licences
+          # Injection des signatures de licences officielles Google
+          # Cela simule l'acceptation manuelle (y) pour toutes les versions
           echo -e "8933bad161af4178b1185d1a37fbf41ea5269c55\nd56f5187479451eabf01fb743402295594811d12\n24333f8a63b6825ea9d5573f8e9976d4e3b2365b" > .buildozer/android/platform/android-sdk/licenses/android-sdk-license
           echo -e "84831b9409646a918e30573bab4c9c91346d8abd" > .buildozer/android/platform/android-sdk/licenses/android-sdk-preview-license
           
-          # On crée aussi le fichier config pour le système
+          # On crée aussi le dossier de configuration global
           mkdir -p ~/.android && touch ~/.android/repositories.cfg
 
-      - name: Build APK (Fix Aidl)
+      - name: Build APK (Bypass Error Aidl)
         run: |
-          # On nettoie les variables qui causent des conflits de version
+          # On efface les variables système qui forcent les mauvaises versions de SDK
           unset ANDROID_HOME
           unset ANDROID_SDK_ROOT
-          # On lance le build en mode debug
+          # On lance le build propre pour CashControl
           buildozer -v android debug
         
       - name: Upload APK Artifact
