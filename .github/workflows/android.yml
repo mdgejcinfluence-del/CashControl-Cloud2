@@ -15,13 +15,6 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Radical Disk Cleanup
-        run: |
-          # On supprime les SDK Android pré-installés par GitHub qui causent le conflit de licence
-          sudo rm -rf /usr/local/lib/android
-          sudo rm -rf /opt/ghc
-          sudo docker image prune -a -f
-
       - name: Install System Dependencies
         run: |
           sudo apt-get update
@@ -30,25 +23,19 @@ jobs:
           pip install --upgrade pip
           pip install buildozer cython kivy cryptography requests
 
-      - name: Pre-Authorize Licenses (The "Silent" Method)
+      - name: Force Fix Licenses
         run: |
-          # On crée le dossier de licences directement dans le répertoire de travail de Buildozer
+          # On crée le dossier qui bloque tout
           mkdir -p .buildozer/android/platform/android-sdk/licenses
-          
-          # On injecte les signatures officielles de Google pour dire "OUI" à tout
+          # On injecte les signatures pour que le message "Accept? (y/N)" disparaisse
           echo -e "8933bad161af4178b1185d1a37fbf41ea5269c55\nd56f5187479451eabf01fb743402295594811d12\n24333f8a63b6825ea9d5573f8e9976d4e3b2365b" > .buildozer/android/platform/android-sdk/licenses/android-sdk-license
-          echo -e "84831b9409646a918e30573bab4c9c91346d8abd" > .buildozer/android/platform/android-sdk/licenses/android-sdk-preview-license
-          
-          # On s'assure que le système global est aussi au courant
-          mkdir -p ~/.android && touch ~/.android/repositories.cfg
 
-      - name: Build APK (Bypass Aidl Error)
+      - name: Build APK (API 31 Stability)
         run: |
-          # On force Buildozer à ignorer les chemins système pour éviter la version 37
+          # On force la version 31 pour éviter les bugs de la version 37
+          export APP_ANDROID_API=31
+          export APP_ANDROID_BUILD_TOOLS_VERSION=31.0.0
           unset ANDROID_HOME
-          unset ANDROID_SDK_ROOT
-          
-          # On lance la compilation en mode verbeux pour voir le succès
           buildozer -v android debug
         
       - name: Upload APK
