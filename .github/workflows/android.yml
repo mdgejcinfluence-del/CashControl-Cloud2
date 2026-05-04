@@ -23,19 +23,25 @@ jobs:
           pip install --upgrade pip
           pip install buildozer cython kivy cryptography requests
 
-      - name: Force Fix Licenses
+      - name: Bypass Google Licenses
         run: |
-          # On crée le dossier qui bloque tout
+          # On crée le dossier manquant manuellement
           mkdir -p .buildozer/android/platform/android-sdk/licenses
-          # On injecte les signatures pour que le message "Accept? (y/N)" disparaisse
+          
+          # On injecte la signature d'acceptation directement sur le disque
+          # Cela empêche le message "Accept? (y/N)" d'apparaître
           echo -e "8933bad161af4178b1185d1a37fbf41ea5269c55\nd56f5187479451eabf01fb743402295594811d12\n24333f8a63b6825ea9d5573f8e9976d4e3b2365b" > .buildozer/android/platform/android-sdk/licenses/android-sdk-license
 
-      - name: Build APK (API 31 Stability)
+      - name: Build APK (Force Stability)
         run: |
-          # On force la version 31 pour éviter les bugs de la version 37
+          # On ignore les outils pré-installés (Version 37) de GitHub
+          unset ANDROID_HOME
+          unset ANDROID_SDK_ROOT
+          
+          # On impose l'API 31 pour retrouver la simplicité d'avant
           export APP_ANDROID_API=31
           export APP_ANDROID_BUILD_TOOLS_VERSION=31.0.0
-          unset ANDROID_HOME
+          
           buildozer -v android debug
         
       - name: Upload APK
